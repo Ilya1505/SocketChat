@@ -1,7 +1,10 @@
+import sys
 import socket
 import threading
 
-from settings.settings import SERVER_PORT
+sys.path = ["", ".."] + sys.path[1:]
+
+from settings import SERVER_PORT
 
 # Global variable that mantain client's connections
 connections = []
