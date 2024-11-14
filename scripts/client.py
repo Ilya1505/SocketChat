@@ -5,63 +5,62 @@ import threading
 sys.path = ["", ".."] + sys.path[1:]
 
 from settings import SERVER_HOST, SERVER_PORT
+from common import get_utcnow_str
 
 
 def handle_messages(connection: socket.socket):
-    '''
-        Receive messages sent by the server and display them to user
-    '''
+    """
+    Прием сообщений от сервера и отображение их на дисплей
+    :param connection:
+    :return:
+    """
 
     while True:
         try:
-            msg = connection.recv(1024)
+            msg = connection.recv(1024)  # Ожидание сообщения от сервера
 
-            # If there is no message, there is a chance that connection has closed
-            # so the connection will be closed and an error will be displayed.
-            # If not, it will try to decode message in order to show to user.
             if msg:
-                print(msg.decode())
+                print(f"[INFO]  [{get_utcnow_str()}]   {msg.decode()}")  # Декодирование сообщения
             else:
                 connection.close()
                 break
 
         except Exception as e:
-            print(f'Error handling message from server: {e}')
+            print(f'[ERROR]  [{get_utcnow_str()}]   Error handling message from server: {e}')
             connection.close()
             break
 
 
 def client() -> None:
-    '''
-        Main process that start client connection to the server
-        and handle it's input messages
-    '''
+    """
+    Главный процесс, подключается к серверу,
+    ожидает ввод текста юзера
+    и запускает новый поток приема сообщений от сервера
+    :return:
+    """
 
-    # Instantiate socket and start connection with server
-    socket_instance = socket.socket()
+    socket_instance = socket.socket()  # Создание сокета
 
     try:
-        socket_instance.connect((SERVER_HOST, SERVER_PORT))
-        # Create a thread in order to handle messages sent by server
-        threading.Thread(target=handle_messages, args=[socket_instance]).start()
+        socket_instance.connect((SERVER_HOST, SERVER_PORT))  # Подключение к серверу
 
-        print('Connected to chat!')
+        threading.Thread(target=handle_messages, args=[socket_instance]).start()  # Создание потока на прием сообщений
+
+        print(f'[INFO]  [{get_utcnow_str()}]   Connected to chat!')
 
         # Read user's input until it quit from chat and close connection
         while True:
             msg = input()
 
-            if msg == 'quit':
+            if msg == 'exit':
                 break
 
-            # Parse message to utf-8
-            socket_instance.send(msg.encode())
+            socket_instance.send(msg.encode())  # Кодирование текста в байты перед отправкой
 
-        # Close connection with the server
         socket_instance.close()
 
     except Exception as e:
-        print(f'Error connecting to server socket {e}')
+        print(f'[ERROR]  [{get_utcnow_str()}]   Error connecting to server socket {e}')
         socket_instance.close()
 
 

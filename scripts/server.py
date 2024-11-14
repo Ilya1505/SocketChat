@@ -5,20 +5,24 @@ import threading
 sys.path = ["", ".."] + sys.path[1:]
 
 from settings import SERVER_PORT
+from common import get_utcnow_str
 
 # Global variable that mantain client's connections
 connections = []
 
 
 def handle_user_connection(connection: socket.socket, address: str) -> None:
-    '''
-        Get user connection in order to keep receiving their messages and
-        sent to others users/connections.
-    '''
+    """
+    Получаем клиентское соединение, ожидаем сообщение от пользователя
+    и отправляем сообщения другим клиентам
+    :param connection:
+    :param address:
+    :return:
+    """
     while True:
         try:
             # Get client message
-            msg = connection.recv(1024)
+            msg = connection.recv(1024)  # Ожидаем сообщение от клиента
 
             # If no message is received, there is a chance that connection has ended
             # so in this case, we need to close connection and remove it from connections list.
@@ -78,29 +82,24 @@ def server() -> None:
         to handle their messages
     '''
 
-
-    # Create server and specifying that it can only handle 4 connections by time!
-    socket_instance = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket_instance = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # Создание сокета
 
     try:
-        socket_instance.bind(('', SERVER_PORT))
-        socket_instance.listen(4)
+        socket_instance.bind(('', SERVER_PORT))  # Поднятие сервера
+        socket_instance.listen(4)  # Установка максимального кол-ва соединений в очереди
 
-        print('Server running!')
+        print(f'[INFO]  [{get_utcnow_str()}]   Server running!')
 
         while True:
-            # Accept client connection
-            socket_connection, address = socket_instance.accept()
-            # Add client connection to connections list
+            socket_connection, address = socket_instance.accept()  # Ожидание клиента
+            print(f"[INFO]  [{get_utcnow_str()}]   New connection from {address}")
             connections.append(socket_connection)
-            # Start a new thread to handle client connection and receive it's messages
-            # in order to send to others connections
-            threading.Thread(target=handle_user_connection, args=[socket_connection, address]).start()
+            threading.Thread(target=handle_user_connection, args=[socket_connection, address]).start()  # Запуск нового потока для обработки подключений
 
     except Exception as e:
-        print(f'An error has occurred when instancing socket: {e}')
+        print(f'[ERROR]  [{get_utcnow_str()}]  An error has occurred when instancing socket: {e}')
     finally:
-        # In case of any problem we clean all connections and close the server connection
+        # Если возникает исключение, чистим все соединения и закрываем коннект к серверу
         if len(connections) > 0:
             for conn in connections:
                 remove_connection(conn)
