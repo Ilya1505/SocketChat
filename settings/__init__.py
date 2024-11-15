@@ -1,1 +1,1 @@
-from .settings import SERVER_PORT, SERVER_HOST
+from .settings import SERVER_PORT, SERVER_HOST, MAX_COUNT_CLIENT
